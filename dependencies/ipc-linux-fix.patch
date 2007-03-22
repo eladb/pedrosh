@@ -1,0 +1,11 @@
+--- ipc-3.7.10.original/etc/GNUmakefile.defs	2006-07-15 14:09:50.000000000 -0400
++++ ipc-3.7.10.patched/etc/GNUmakefile.defs	2006-07-15 14:10:10.000000000 -0400
+@@ -370,7 +370,7 @@
+ 
+ LDFLAGS 	= $(LIB_PATH)
+ LIBS_DBMALLOC 	= -ldbmalloc
+-LIBS_Linux	=  -lbsd -lc
++LIBS_Linux	= -lc
+ LIBS_Solaris	=  -lsocket -lnsl
+ LIBS_wnt	=  -lwsock32
+ LIBRARIES	= -lipc $(LIBS_$(DBMALLOC)) $(LIBS_$(THIS_OS))

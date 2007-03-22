@@ -1,0 +1,25 @@
+# command line parser for pedrosh.
+#
+# process this file with gengetopt to produce cmdline.c cmdline.h
+#   gengetopt < pedrosh.ggo --file-name=pedrosh-getopt
+
+
+# can specify package name & version here. if not, values from configure.ac are used.
+##package embrix-pedro
+##version 0.2.1
+
+#option "mgmtfs" m "path to the management file system directory" string no typestr="path" no
+
+option "mgmtfs" m "path to the management file system directory" string no
+option "testing-stub" - "use stub handler instead of ipc handler" flag off
+
+
+#option <long> <short> <desc> \
+#	{argtype} {typestr="<type descr>"} \
+#	{values="<value1>","<value2>",...} \
+#	{default="<default value>"} \
+#	{dependon="<other option>"} \
+#	{required} {argoptional} {multiple} \
+#	{hidden}
+#option <long> <short> <desc> flag <on/off>
+

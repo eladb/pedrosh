@@ -1,0 +1,356 @@
+
+# this file testing a running pedrosh with mgmtfs as create by tests/test_task.cc.
+# this means that two processes should aleady be running before running
+# dejagnu (which will luanch pedrosh):
+#   1) libipc's central
+#   2) tests/test_task.cc (create mgmtfs and responds to the 
+#      commands we'll send pedrosh)
+
+set timeout 3
+#
+# expectations that clean up in case of error. Note that `$test' is
+# a purely local variable.
+#
+# The first of these is used to match any bad responses, and resynchronise
+# things by finding a prompt. The second is a timeout error, and shouldn't
+# ever be triggered.
+#
+expect_after {
+#    -re "\[^\n\r\]*$prompt$" {
+#      fail "$test (bad match)"
+#      if { $verbose > 0 } {
+#        regexp ".*\r\n(\[^\r\n\]+)(\[\r\n\])+$prompt$" \
+#		     $expect_out(buffer) "" output
+#	       send_user "\tUnmatched output: \"$output\"\n"
+#      }
+#    }
+    timeout {
+      fail "$test (timeout)"
+    }
+}
+
+#
+# Here are the tests
+#
+
+#send_user "\[/] " 
+
+set test "test1"
+send "/\n"
+expect {
+    "\\\[/] "	{ pass "$test" }
+}
+
+
+set test "test2"
+send "test\n"
+expect {
+    "test/] "	{ pass "$test" }
+}
+
+
+set test "test3"
+send "test\n"
+expect {
+#    "Error: unknown command - params-test.*params-test/\] "
+    -re "Error:.*\n.*test/] "
+		   { pass "$test" }
+}
+
+set test "checking '..' as a command"
+send "..\n"
+expect {
+	"/] " { pass ".. works" }
+}
+
+send "test\n"
+
+
+####################################################
+
+
+set test "a version"
+send "$test\n"
+expect {
+    -re "version: test_client.cc .*\n.*test/] "	{ pass "$test" }
+}
+
+
+#
+#
+# some checking to is_arg_defined() using "b cmd_show_given" command
+# which prints which of its many optional args were defined on the
+# command line
+#
+#
+
+set test "b cmd_show_given"
+send "$test\n"
+expect {
+     #note: every line returning from pedrosh has \r\n at the end.
+    -re "string_arg - 0\r
+int_arg1 - 0\r
+int_arg2 - 0\r
+ipv4_arg - 0\r
+ipv6_arg - 0\r
+enum_arg1 - 0\r
+enum_arg2 - 0\r
+date_arg - 0\r
+time_arg - 0\r
+\r.test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_given int_arg1 1"
+send "$test\n"
+expect {
+     #note: every line returning from pedrosh has \r\n at the end.
+    -re "string_arg - 0\r
+int_arg1 - 1\r
+int_arg2 - 0\r
+ipv4_arg - 0\r
+ipv6_arg - 0\r
+enum_arg1 - 0\r
+enum_arg2 - 0\r
+date_arg - 0\r
+time_arg - 0\r
+\r.test/]"   { pass "$test" }
+}
+
+set test "b cmd_show_given ipv4_arg 1.2.3.4"
+send "$test\n"
+expect {
+     #note: every line returning from pedrosh has \r\n at the end.
+    -re "string_arg - 0\r
+int_arg1 - 0\r
+int_arg2 - 0\r
+ipv4_arg - 1\r
+ipv6_arg - 0\r
+enum_arg1 - 0\r
+enum_arg2 - 0\r
+date_arg - 0\r
+time_arg - 0\r
+\r.test/]"   { pass "$test" }
+}
+
+set test "b cmd_show_given enum_arg2 one"
+send "$test\n"
+expect {
+     #note: every line returning from pedrosh has \r\n at the end.
+    -re "string_arg - 0\r
+int_arg1 - 0\r
+int_arg2 - 0\r
+ipv4_arg - 0\r
+ipv6_arg - 0\r
+enum_arg1 - 0\r
+enum_arg2 - 1\r
+date_arg - 0\r
+time_arg - 0\r
+\r.test/]"   { pass "$test" }
+}
+
+set test "b cmd_show_given enum_arg2 one string_arg abcdefgh time_arg 12:34:56"
+send "$test\n"
+expect {
+     #note: every line returning from pedrosh has \r\n at the end.
+    -re "string_arg - 1\r
+int_arg1 - 0\r
+int_arg2 - 0\r
+ipv4_arg - 0\r
+ipv6_arg - 0\r
+enum_arg1 - 0\r
+enum_arg2 - 1\r
+date_arg - 0\r
+time_arg - 1\r
+\r.test/]"   { pass "$test" }
+}
+
+#
+# now using the command "b cmd_show_val"
+# the command handler prints the data we sent it.
+# this will check several pedro_get_xxx_arg() functions
+#
+
+set test "b cmd_show_val string_arg 1234"
+send "$test\n"
+expect {
+    -re "string_arg - '1234'\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val ipv4_arg 1.2.3.4"
+send "$test\n"
+expect {
+    -re "ipv4_arg - 04030201\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val ipv4_arg 111.112.113.114"
+send "$test\n"
+expect {
+    -re "ipv4_arg - 7271706F\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val enum_arg1 one"
+send "$test\n"
+expect {
+    -re "enum_arg1 - 0\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val enum_arg1 two"
+send "$test\n"
+expect {
+    -re "enum_arg1 - 1\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val enum_arg1 three"
+send "$test\n"
+expect {
+    -re "enum_arg1 - 2\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val enum_arg1 four"
+send "$test\n"
+expect {
+    -re "enum_arg1 - 3\r
+.*test/]"   { pass "$test" }
+}
+
+#
+#{"int_arg1",       1,    PEDRO_ARG_INT                        },
+#
+set test "b cmd_show_val int_arg1 0"
+send "$test\n"
+expect {
+    -re "int_arg1 - 0\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 1"
+send "$test\n"
+expect {
+    -re "int_arg1 - 1\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 100"
+send "$test\n"
+expect {
+    -re "int_arg1 - 100\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 -1"
+send "$test\n"
+expect {
+    -re "int_arg1 - -1\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 -100"
+send "$test\n"
+expect {
+    -re "int_arg1 - -100\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 0xF1"
+send "$test\n"
+expect {
+    -re "int_arg1 - 241\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg1 -0xF1"
+send "$test\n"
+expect {
+    -re "int_arg1 - -241\r
+.*test/]"   { pass "$test" }
+}
+
+
+#
+#{"int_arg2",       1,    PEDRO_ARG_INT,     0,      100       },
+#
+set test "b cmd_show_val int_arg2 5"
+send "$test\n"
+expect {
+    -re "int_arg2 - 5\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg2 0"
+send "$test\n"
+expect {
+    -re "int_arg2 - 0\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg2 100"
+send "$test\n"
+expect {
+    -re "int_arg2 - 100\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg2 -1"
+send "$test\n"
+expect {
+    -re "error: int_arg2: '-1': integer should be larger than 0\r
+.*test/]"   { pass "$test" }
+}
+
+
+set test "b cmd_show_val int_arg2 101"
+send "$test\n"
+expect {
+    -re "error: int_arg2: '101': integer should be smaller than 100\r
+.*test/]"   { pass "$test" }
+}
+
+
+#
+#{"ipv6_arg",       1,    PEDRO_ARG_IPV6                       },
+#
+set test "b cmd_show_val ipv6_arg  0102:0304:0506:0708:0910:1112:1314:1516"
+send "$test\n"
+expect {
+    -re "ipv6_arg - 02 01 04 03 06 05 08 07 10 09 12 11 14 13 16 15 \r
+.*test/]"   { pass "$test" }
+}
+
+#{"date_arg",       1,    PEDRO_ARG_DATETIME,(int)"%Y-%m-%d"},
+set test "b cmd_show_val date_arg 2006-09-08"
+send "$test\n"
+expect {
+    -re "date_arg - '2006-09-08'\r
+.*test/]"   { pass "$test" }
+}
+
+
+#{"time_arg",       1,    PEDRO_ARG_DATETIME,(int)"%H:%M:%S"},
+set test "b cmd_show_val time_arg 01:02:03"
+send "$test\n"
+expect {
+    -re "time_arg - '01:02:03'\r
+.*test/]"
+}
