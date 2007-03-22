@@ -1,0 +1,8 @@
+
+release 1.1
+===========
+this version fixes bug #58843: '..' command cause the pedrosh to stuck.
+see https://launchpad.net/products/pedro/+bug/58843 for more details.
+fixed bug and added unit test to check the situation.
+
+eladb@embrix.com

@@ -1,0 +1,9 @@
+# after there should not be a configure and/or Makefile in the directory.
+# this makefile creates the initial configure script using the autotools.
+# to run it:
+#   make -f Makefi;e.svn
+all:
+	aclocal
+	autoheader
+	automake --add-missing
+	autoconf    

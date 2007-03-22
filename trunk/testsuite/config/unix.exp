@@ -1,0 +1,24 @@
+#if ![info exists prompt] then {
+#    set prompt "[/] "
+#}
+
+proc pedrosh_exit {} {}
+
+proc pedrosh_version {} {}
+
+proc pedrosh_start {} {
+#    global pedrosh
+#    global prompt
+    global spawn_id
+
+#    spawn $pedrosh
+    spawn "./pedrosh" "-m" "/tmp/clifs"
+    expect {
+      -re "No such file.*" { perror "Can't start _CALC"; exit 1 }
+      -re	"error: '.*' is not a valid directory path." { perror "mgmtfs not found"; exit 1 }
+      "/] " { send_user "pedrosh launched\n" }
+      timeout { perror "Failed to spawn _CALC (timeout)"; exit 1 }
+    }
+}
+
+pedrosh_start
