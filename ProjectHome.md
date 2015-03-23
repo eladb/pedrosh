@@ -1,0 +1,3 @@
+Pedro shell (pedrosh) is an extensible command line interface (CLI) for embedded devices based on a POSIX-complaint operating system.
+Pedro supports defining the commands tree dynamically and implementing commands using various ways, including shell scripts, inline functions embedded within the shell or RPC (CMU-RPC).
+The project has been developed as a joint venture between Corrigent Systems Ltd. and Embrix Limited.
